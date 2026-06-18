@@ -41,3 +41,33 @@
 - **Note for Phase 2:** Next 16 renames middleware concepts — `node_modules/next/dist/docs/` has
   `16-proxy.md`. Read `02-guides/authentication.md`, `16-proxy.md`, `15-route-handlers.md`,
   `18-upgrading.md` before writing Supabase SSR/session code.
+
+## 2026-06-18 — Phase 2: Database & Authentication
+- **Docs read first (Next 16):** `16-proxy.md` (Middleware → **Proxy**: `src/proxy.ts`, export `proxy`,
+  Node runtime), `authentication.md` (optimistic check in proxy, secure check via `getUser()` in
+  RSC/actions), `route-handlers.md` (`cookies()` is async).
+- **Supabase project:** `get_cost` = **$0/mo** (free). `create_project` failed — org at the **2 free
+  project limit**; re-listing showed the user had already created an empty `actrade` project
+  (`nazcnetdqdtflhcjdlsv`) earlier today. Reused it (empty: 0 tables / 0 migrations).
+- **Schema (`0001_init_schema`):** 5 tables (profiles, accounts, setups, trades, executions) with
+  multi-asset columns (`asset_class`, `multiplier`/`contract_size`) + futures-ready scaffold
+  (tick_size, point_value, contract_expiry). Indexes for dashboard hot paths. RLS on all tables
+  using `(select auth.uid())` (pre-empts the perf advisor). Triggers: `handle_new_user`,
+  `set_updated_at`, dedupe-hash.
+- **Fixed:** generated `dedupe_hash` column → `42P17 generation expression is not immutable`
+  (`timestamptz::text` depends on session TZ). Switched to a BEFORE INSERT trigger
+  (`set_execution_dedupe_hash`, canonicalizes to UTC) — not bound by the immutability rule.
+- **Security advisor:** flagged mutable search_path on 2 trigger fns + SECURITY DEFINER fns callable
+  via RPC (incl. a pre-existing `rls_auto_enable` event trigger). `0002_security_hardening`: pinned
+  search_path + revoked EXECUTE from anon/authenticated/public. **Re-run → 0 warnings.**
+- **App layer:** installed `@supabase/ssr`, `@supabase/supabase-js`, `zod`. Wrote `src/types/database.ts`,
+  `lib/supabase/{client,server,session}.ts`, `src/proxy.ts` (Next 16 proxy), `lib/auth.ts` DAL
+  (`getUser`/`requireUser`), `actions/auth.ts`, `app/auth/callback/route.ts`, `app/login` +
+  `components/auth/login-form.tsx`, protected `(dashboard)` group. `.env.local` filled with the
+  publishable key.
+- **Hardening:** proxy guards missing env (degrades to logged-out) so prod won't 500 before Vercel
+  env vars are set.
+- **Verified:** `npm run build` ✓, `npm run lint` ✓. Dev server probe (port 3987 — 3000/3100 were
+  taken): `/` 200, `/login` 200, `/dashboard` → **307 → `/login?redirect=%2Fdashboard`** against
+  live Supabase. Auth gate works end-to-end.
+- **Open / HALT:** user to set Vercel env vars + Supabase auth URLs + Google OAuth creds, then "Proceed".

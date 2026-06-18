@@ -49,3 +49,30 @@
   Phase 3; **futures parsing implemented in the final phase**.
 - **Why:** User's explicit instruction — scaffold futures structure early, defer parsing.
 - **Status:** Final.
+
+## 2026-06-18 — Reuse the existing `actrade` Supabase project
+- **Decision:** Use the empty `actrade` project (`nazcnetdqdtflhcjdlsv`) the user had already
+  created, rather than creating a new one.
+- **Why:** `create_project` failed — the org is at the 2-active-free-project limit, and `actrade`
+  already existed and was empty (0 tables / 0 migrations). Reuse = zero data loss, no upgrade needed.
+- **Status:** Final.
+
+## 2026-06-18 — dedupe_hash via trigger, not a generated column
+- **Decision:** Compute `executions.dedupe_hash` in a BEFORE INSERT trigger (UTC-canonicalized),
+  not a `generated always as ... stored` column.
+- **Why:** Postgres rejected the generated column (`42P17`): `timestamptz::text` is not IMMUTABLE
+  (depends on session timezone). Triggers aren't bound by that rule and keep dedup DB-enforced.
+- **Status:** Final.
+
+## 2026-06-18 — Next 16 Proxy for Supabase session refresh
+- **Decision:** Session refresh lives in `src/proxy.ts` (Next 16's renamed Middleware), exporting
+  `proxy`. Optimistic redirect only; secure auth = `getUser()` in Server Components/Actions (DAL
+  `lib/auth.ts`). Proxy guards missing env to avoid prod 500s.
+- **Why:** Next 16 renamed Middleware → Proxy; the docs prescribe optimistic-in-proxy + secure-at-source.
+- **Status:** Final.
+
+## 2026-06-18 — Vercel env vars set manually by user
+- **Decision:** The 3 `NEXT_PUBLIC_*` vars + Supabase auth URLs + Google OAuth creds are configured
+  in the Vercel/Supabase/Google dashboards by the user, not pushed via MCP.
+- **Why:** The Vercel project `ac-trade-rose` lives in a scope the Vercel MCP token can't see.
+- **Status:** Revisit in Phase 5 if MCP access to the project becomes available.
