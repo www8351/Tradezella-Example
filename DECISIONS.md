@@ -76,3 +76,35 @@
   in the Vercel/Supabase/Google dashboards by the user, not pushed via MCP.
 - **Why:** The Vercel project `ac-trade-rose` lives in a scope the Vercel MCP token can't see.
 - **Status:** Revisit in Phase 5 if MCP access to the project becomes available.
+
+## 2026-06-18 — Fill sources reconstructed; completed-trade sources are trades-per-row
+- **Decision:** Crypto/per-fill exports flow executions → average-cost reconstruction → trades.
+  Completed-trade exports (MT4/5, generic entry+exit) produce one trade per row directly (plus two
+  synthetic executions), without re-netting.
+- **Why:** Re-netting completed rows by symbol would merge concurrent same-symbol positions (MT allows
+  multiple open tickets), diverging from the broker's per-ticket accounting.
+- **Status:** Final for v1.
+
+## 2026-06-18 — Naked timestamps normalized to UTC
+- **Decision:** Broker timestamps without a timezone (MT `2026.06.18 10:00:00`, naked ISO) are treated
+  as UTC, not server-local.
+- **Why:** `new Date()` on a naked string uses the server's TZ, making ordering deployment-dependent and
+  able to flip trade direction. The true source TZ is unknown, so UTC is the deterministic choice.
+- **Status:** Final (revisit only if a per-import source-timezone option is added).
+
+## 2026-06-18 — Re-import safety: executions dedup; trades gated to all-new executions
+- **Decision:** Executions dedup on (user, content-hash). Trades are inserted only when *all* their
+  composing executions are newly inserted this batch; `executions.trade_id` is then linked.
+- **Why:** Reconstruction runs over the whole uploaded file, so inserting its trades unconditionally
+  duplicated already-imported trades on any overlapping re-import. Gating prevents double-counting.
+- **Rejected:** trade-level unique constraint (no stable natural key); replace-by-(account,symbol)
+  (would drop trades from prior imports of other fills).
+- **Status:** Final for v1. Limitation: a trade opened in one import and closed by a later import isn't
+  re-reconstructed yet (deferred).
+
+## 2026-06-18 — Adversarial multi-agent review at phase boundaries
+- **Decision:** Run a Workflow of dimension reviewers + per-finding adversarial verifiers over
+  correctness-critical code before finalizing a phase.
+- **Why:** It caught 9 real bugs in Phase 3 (2 critical) that the unit tests missed, incl. a
+  deployment-dependent timestamp defect and a re-import double-count.
+- **Status:** Standing practice for correctness-critical phases.

@@ -71,3 +71,31 @@
   taken): `/` 200, `/login` 200, `/dashboard` → **307 → `/login?redirect=%2Fdashboard`** against
   live Supabase. Auth gate works end-to-end.
 - **Open / HALT:** user to set Vercel env vars + Supabase auth URLs + Google OAuth creds, then "Proceed".
+- **OAuth 500 fix (post-Phase-2):** after Google config, prod `/auth/callback` 500'd because the running
+  build predated the env vars. Hardened the callback (env guard + try/catch → `/login?error=` instead of
+  500) and pushed (fresh build picks up env).
+
+## 2026-06-18 — Phase 3: Ingestion, Reconstruction & Metrics
+- **Built:** parser layer (`src/lib/import/`) — tolerant CSV coercion (`columns.ts`), crypto fill adapters
+  (Binance/Coinbase/Bybit via flexible `fills.ts`), `completed.ts` (one trade per entry+exit row),
+  `metatrader.ts` (MT4/5 HTML statements, disambiguating duplicate Time/Price columns), `contracts.ts`
+  (CFD/forex contract sizes), `index.ts` dispatcher (HTML/CSV + fill/completed auto-detect). Average-cost
+  walk-to-flat reconstruction (`reconstruct.ts`) + decimal PnL (`pnl.ts`). Metrics module. `import.ts` +
+  `accounts.ts` server actions. vitest toolchain.
+- **Design call:** fill sources (crypto) are reconstructed; completed-trade sources (MT4/5, generic
+  entry+exit) become one trade per row directly — re-netting would wrongly merge concurrent same-symbol
+  positions. Unified via `IngestResult` (executions + trades + executionIndexes linkage).
+- **Fixed during build:** generated `dedupe_hash` immutability (→ trigger), `maxPct` CFA-narrowed-to-never
+  (→ inline loop, no closure), zod transform+default friction.
+- **Verified DB mechanism:** confirmed `ON CONFLICT (user_id, dedupe_hash)` dedup works with a
+  trigger-populated column (temp-table SQL test → 2 of 3 rows inserted).
+- **Adversarial review (workflow, 15 agents, 4 dimensions):** 11 raw findings → 9 confirmed real. Fixed 8:
+  (1) CRITICAL naked/MT timestamps parsed in server-local TZ → now normalized to UTC; (2) CRITICAL duplicate
+  trades on partial re-import → trades gated to all-new executions + `executions.trade_id` linking added;
+  (3) accounting negatives with trailing suffix `"(100) USD"`; (4) trade_id never linked → now linked;
+  (5) garbage cell → 0 instead of null; (6/8) decimal default-20-digit precision noise → `Decimal.set(40)`;
+  (7) wrong skipped-row line numbers (blank lines / MT-HTML offset) → true source lines tracked.
+  Deferred (9): EU-locale numbers (auto-detect is ambiguous; needs explicit per-import locale).
+- **Tests:** 27 → **37 vitest tests** (added date/number coercion, UTC ordering, precision, row-number,
+  accounting-negative cases). `npm run build` ✓, `npm run lint` ✓.
+- **Open / HALT:** awaiting "Proceed" for Phase 4 (UI exercises the import pipeline end-to-end vs the DB).
