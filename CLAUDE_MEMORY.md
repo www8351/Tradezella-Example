@@ -10,6 +10,8 @@
   then wait for the user's explicit **"Proceed"** before the next step.
 - On any error: stop, output the exact error, propose + apply a fix, re-verify before moving on.
 - **No stubs.** Production-ready code: robust error handling, strong types, secure-by-design.
+- **Adversarial review at phase boundaries.** Run a multi-agent review (dimension reviewers +
+  per-finding verifiers) over correctness-critical code before finalizing a phase; fix confirmed bugs.
 - Update lifecycle files autonomously at each phase boundary: STATUS + PROGRESS on task
   completion; DECISIONS on architectural shifts/rejected paths; README on stack/direction change;
   this file when core rules evolve.
@@ -29,8 +31,10 @@
 ## Product invariants
 - `executions` immutable source of truth; `trades` derived (average-cost, walk-to-flat, cached
   metrics). Decimal math, never floats. RLS isolates tenants (`auth.uid() = user_id`).
-- Multi-asset: crypto / cfd / futures / equity via `asset_class` + `multiplier`. Futures parsing
-  deferred to the final phase.
+- Multi-asset: crypto / cfd / futures / equity via `asset_class` + `multiplier`. Per-symbol pricing
+  via `contractFor` (CFD lot size; futures point value + tick size). Re-imports dedup by content hash.
+- **v1 build complete** (all 5 phases); live on Vercel. Remaining work is user-side prod config +
+  backlog (EU-locale numbers, cross-batch closes, exact futures expiry, trade-log pagination).
 
 ## Security / Hardening
 - No secrets in code or these files. `.env.local` gitignored; service-role key server-only.
