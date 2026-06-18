@@ -129,3 +129,18 @@
 - **Why:** date-fns `format` uses the server's local timezone (UTC on Vercel), which mismatched the
   profile-timezone buckets and dropped/shifted cells for non-UTC users.
 - **Status:** Final.
+
+## 2026-06-18 — Futures priced by point value; expiry deferred
+- **Decision:** Futures PnL uses a per-root point-value multiplier (`FUTURES_SPECS`); `futuresRoot`
+  strips month/year codes. `point_value`/`tick_size` are recorded on trades; `contract_expiry` is left
+  null (exact expiry is per-contract: 3rd Friday, ~20th, etc.).
+- **Why:** Point value is what makes futures PnL correct (the journal's core need); precise expiry
+  derivation is contract-specific and low-value for analytics.
+- **Status:** Final for v1; expiry derivation is a future refinement.
+
+## 2026-06-18 — Unified contract lookup via `contractFor`
+- **Decision:** A single `contractFor(symbol) → { multiplier, tickSize?, pointValue? }` callback drives
+  per-symbol pricing in both `parseFills` and `parseCompletedCsv` (CFD and futures share the shape).
+- **Why:** Replaces the narrower `multiplierFor` and lets futures carry tick/point metadata without
+  touching the tested `reconstruct.ts` core.
+- **Status:** Final.

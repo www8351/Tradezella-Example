@@ -126,3 +126,24 @@
 - **Note:** the authed dashboard can't be rendered headlessly (auth gate) — interactive verification
   awaits the user's first login, which also exercises the import pipeline end-to-end.
 - **Open / HALT:** awaiting "Proceed" for Phase 5 (futures parsing + prod verification).
+
+## 2026-06-18 — Phase 5: Futures parsing + production verification
+- **Futures parsing:** added `contracts.ts` FUTURES_SPECS (point value + tick size per root) covering
+  CME/CBOT/NYMEX/COMEX index/energy/metal/rate/grain majors + micros; `futuresRoot` strips trailing
+  month/year codes via regex (`ESZ5`→`ES`, `MNQH26`→`MNQ`, `6EU5`→`6E`); `futuresContract` returns
+  {multiplier=pointValue, tickSize, pointValue}. Added "futures" platform to the dispatcher — prices
+  fills (NinjaTrader-style) and completed trades (Tradovate-style) by point value, asset_class=futures.
+- **Plumbing:** unified the per-symbol contract lookup as `contractFor` across `parseFills` and
+  `parseCompletedCsv` (replacing `multiplierFor`); MT path passes a CFD `contractFor`. Added optional
+  `tickSize`/`pointValue`/`contractExpiry` to `ReconstructedTrade` (kept `reconstruct.ts` untouched —
+  fields default undefined for the fills path) and persisted them in the import action. `contract_expiry`
+  left null (exact per-contract expiry deferred).
+- **Verified:** 42 → **48 vitest tests** (added futures fills/completed + contract-spec/root edge cases).
+  build ✓, lint ✓.
+- **Production:** pushed (auto-deploy); confirmed **https://ac-trade-rose.vercel.app serves HTTP 200**
+  (landing renders). Final Supabase `get_advisors`: clean except `auth_leaked_password_protection`
+  (optional Auth dashboard toggle — flagged for the user).
+- **Note:** Vercel project `ac-trade-rose` still outside the MCP-visible team, so prod env vars + the
+  login smoke test remain user-side (documented in STATUS). Build/types/tests + two adversarial review
+  passes cover correctness.
+- **Project build complete (v1).** Remaining work is user-side prod config + optional custom domain.
