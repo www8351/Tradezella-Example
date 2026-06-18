@@ -108,3 +108,24 @@
 - **Why:** It caught 9 real bugs in Phase 3 (2 critical) that the unit tests missed, incl. a
   deployment-dependent timestamp defect and a re-import double-count.
 - **Status:** Standing practice for correctness-critical phases.
+
+## 2026-06-18 — UI stack: hand-written primitives, no Radix
+- **Decision:** Build shadcn-style primitives by hand (card/button/badge) + native form controls;
+  Recharts for charts, TanStack Table for the trade log, date-fns. Account selection via a cookie.
+- **Why:** Avoids a Radix dependency and `shadcn init` rewriting the hand-placed theme; native
+  `<select>`/inputs are accessible enough for this app and keep full control.
+- **Status:** Final for v1 (can adopt Radix later for richer popovers/dialogs).
+
+## 2026-06-18 — Intra-file fill dedup before insert
+- **Decision:** `dedupeExecutions` collapses byte-identical fills in an upload to one execution and
+  remaps trade execution-indexes onto the deduped set before the DB insert.
+- **Why:** Postgres `ON CONFLICT DO NOTHING` drops one of two identical rows in a single insert; the
+  Phase 3 all-new-exec trade gate then keyed newness on the dropped row and silently lost the trade.
+- **Status:** Final; locked with unit tests.
+
+## 2026-06-18 — Timezone is threaded through the calendar
+- **Decision:** The PnL calendar grid is built on UTC-anchored dates keyed by the profile timezone,
+  matching `pnlByDay`'s bucket keys; the component receives `tz` explicitly.
+- **Why:** date-fns `format` uses the server's local timezone (UTC on Vercel), which mismatched the
+  profile-timezone buckets and dropped/shifted cells for non-UTC users.
+- **Status:** Final.

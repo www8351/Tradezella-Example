@@ -7,11 +7,13 @@ import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { parseImport } from "@/lib/import";
+import { dedupeExecutions } from "@/lib/import/dedupe";
 import type { ImportPlatform } from "@/types/trading";
 
 export interface ImportSummary {
   ok: boolean;
   error?: string;
+  warning?: string;
   insertedExecutions?: number;
   duplicateExecutions?: number;
   insertedTrades?: number;
@@ -82,7 +84,12 @@ export async function importExecutions(
   }
 
   const batchId = randomUUID();
-  const execRows = parsed.executions.map((e) => ({
+
+  // Collapse byte-identical fills within this upload to a single execution so
+  // the trade-newness gate isn't keyed on a row Postgres silently drops.
+  const { unique: uniqueExecs, remap } = dedupeExecutions(parsed.executions);
+
+  const execRows = uniqueExecs.map((e) => ({
     id: randomUUID(),
     user_id: user.id,
     account_id: accountId,
@@ -112,7 +119,7 @@ export async function importExecutions(
   const insertedIds = new Set((insertedExecs ?? []).map((r) => r.id));
   const isNewExec = execRows.map((r) => insertedIds.has(r.id));
   const insertedExecutions = insertedIds.size;
-  const duplicateExecutions = execRows.length - insertedExecutions;
+  const duplicateExecutions = parsed.executions.length - insertedExecutions;
 
   // Nothing new (full re-import) — don't create duplicate trades.
   if (insertedExecutions === 0) {
@@ -131,7 +138,7 @@ export async function importExecutions(
   // fill — is deferred to a future cross-batch reconstruction; its new
   // executions are still stored, just not yet linked to a trade.)
   const newTrades = parsed.trades.filter((t) =>
-    t.executionIndexes.every((i) => isNewExec[i]),
+    t.executionIndexes.every((i) => isNewExec[remap[i]]),
   );
 
   const tradeRows = newTrades.map((t) => ({
@@ -156,23 +163,30 @@ export async function importExecutions(
     r_multiple: t.rMultiple,
   }));
 
+  let linkWarning: string | undefined;
   if (tradeRows.length > 0) {
     const { error: tradeErr } = await supabase.from("trades").insert(tradeRows);
     if (tradeErr) {
       return { ok: false, error: `Saving trades failed: ${tradeErr.message}` };
     }
 
-    // Link each trade's executions back to it (executions.trade_id). These
-    // executions were all newly inserted, so their generated ids are known.
-    await Promise.all(
+    // Link each trade's executions back to it (executions.trade_id). De-dup the
+    // id list (a duplicated fill collapses to one execution row).
+    const linkResults = await Promise.all(
       newTrades.map((t, j) => {
-        const execIds = t.executionIndexes.map((i) => execRows[i].id);
+        const execIds = [
+          ...new Set(t.executionIndexes.map((i) => execRows[remap[i]].id)),
+        ];
         return supabase
           .from("executions")
           .update({ trade_id: tradeRows[j].id })
           .in("id", execIds);
       }),
     );
+    if (linkResults.some((r) => r.error)) {
+      linkWarning =
+        "Some executions could not be linked to their trades. Metrics are unaffected.";
+    }
   }
 
   revalidatePath("/dashboard");
@@ -182,5 +196,6 @@ export async function importExecutions(
     duplicateExecutions,
     insertedTrades: tradeRows.length,
     skipped: parsed.skipped,
+    warning: linkWarning,
   };
 }

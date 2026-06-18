@@ -99,3 +99,30 @@
 - **Tests:** 27 → **37 vitest tests** (added date/number coercion, UTC ordering, precision, row-number,
   accounting-negative cases). `npm run build` ✓, `npm run lint` ✓.
 - **Open / HALT:** awaiting "Proceed" for Phase 4 (UI exercises the import pipeline end-to-end vs the DB).
+
+## 2026-06-18 — Phase 4: Frontend & Dashboard
+- **Approach:** hand-written shadcn-style primitives + native form controls (no Radix), Recharts for the
+  equity curve, TanStack Table for the trade log, date-fns. Account selection via a cookie + switcher.
+- **Built:** UI primitives (`components/ui/{card,button,badge}`), `lib/format.ts`, server data layer
+  (`lib/data/trades.ts`: getTrades/getTrade/getTradeExecutions/getDashboardData/getActiveAccount).
+  Layout shell (sidebar + header + account-switcher). Dashboard page (stat cards, equity curve,
+  PnL calendar, recent trades, range tabs). Trades page (TanStack table + URL filter bar). Trade
+  detail (`[id]`) with executions ladder + notes editor. Import page + form. Accounts page + form.
+  Settings page + profile form. Server actions: trades (notes), profile, preferences (active account).
+- **Verified pre-review:** `npm run build` ✓ (11 routes), 37 tests ✓. Fixed a Recharts 3 Tooltip
+  readonly-payload type error.
+- **Adversarial review (workflow, 10 agents, 4 dimensions):** 6 findings, all 6 confirmed real, all fixed:
+  (1) HIGH — intra-file duplicate fill collapsed by `ON CONFLICT DO NOTHING` made the all-new-exec trade
+  gate drop a legitimate trade on FIRST import (regression from the Phase 3 dedup gate) → added
+  `dedupeExecutions` (content-key collapse + index remap, unit-tested). (2) HIGH — calendar cells keyed
+  in server-local TZ vs profile-TZ buckets → threaded `tz` through and rebuilt the grid on UTC-anchored
+  dates. (3) MEDIUM — swallowed `executions.trade_id` link errors → captured + surfaced a warning.
+  (4) MEDIUM — `getTradeExecutions` fallback unbounded for open trades / pulled other trades' fills →
+  closed-only, bounded, `trade_id IS NULL`. (5) LOW — null net_pnl/R sorted as 0 → `accessorFn` +
+  `sortUndefined: 'last'`. (6) LOW — equity baseline reused the first trade's timestamp (duplicate x) →
+  anchored one day earlier.
+- **Tests:** 37 → **40** (added `dedupeExecutions` cases). build ✓, lint ✓ (silenced the benign
+  TanStack/React-Compiler memoization warning).
+- **Note:** the authed dashboard can't be rendered headlessly (auth gate) — interactive verification
+  awaits the user's first login, which also exercises the import pipeline end-to-end.
+- **Open / HALT:** awaiting "Proceed" for Phase 5 (futures parsing + prod verification).
