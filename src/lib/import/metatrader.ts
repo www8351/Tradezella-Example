@@ -43,7 +43,11 @@ export function parseMetaTraderHtml(html: string): IngestResult {
     if (rows.length > 0) {
       return rowsToIngest(rows, headers, {
         assetClass: "cfd",
-        multiplierFor: contractMultiplier,
+        contractFor: (s) => ({
+          multiplier: contractMultiplier(s),
+          tickSize: null,
+          pointValue: null,
+        }),
       });
     }
   }

@@ -12,7 +12,8 @@ export type ImportPlatform =
   | "coinbase"
   | "bybit"
   | "mt4"
-  | "mt5";
+  | "mt5"
+  | "futures";
 
 /**
  * Normalized execution (a single fill) emitted by every parser adapter and
@@ -57,6 +58,10 @@ export interface ReconstructedTrade {
   initialRisk: number | null;
   /** netPnl / initialRisk (null when risk is unknown or the trade is open). */
   rMultiple: number | null;
+  /** Futures contract metadata (set by the futures path; undefined otherwise). */
+  tickSize?: number | null;
+  pointValue?: number | null;
+  contractExpiry?: string | null;
   /** Indexes into the input execution array that compose this trade. */
   executionIndexes: number[];
   /** Caller refs (e.g. DB ids) of the executions composing this trade. */

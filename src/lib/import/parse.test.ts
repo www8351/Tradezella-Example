@@ -86,6 +86,37 @@ describe("parseImport — MetaTrader", () => {
   });
 });
 
+describe("parseImport — futures", () => {
+  it("prices futures fills by point value and reconstructs", () => {
+    const csv = [
+      "Symbol,Side,Quantity,Price,Time",
+      "ESZ5,buy,1,5000,2026-06-18T10:00:00Z",
+      "ESZ5,sell,1,5010,2026-06-18T10:05:00Z",
+    ].join("\n");
+    const { trades } = parseImport(csv, "futures");
+    expect(trades).toHaveLength(1);
+    const t = trades[0];
+    expect(t.assetClass).toBe("futures");
+    expect(t.multiplier).toBe(50); // ES point value
+    expect(t.grossPnl).toBe(500); // (5010-5000)*1*50
+  });
+
+  it("prices a completed futures trade and records contract specs", () => {
+    const csv = [
+      "Symbol,Side,Size,Entry,Exit,DateTime",
+      "MNQH6,long,2,18000,18010,2026-06-18T10:00:00Z",
+    ].join("\n");
+    const { trades } = parseImport(csv, "futures");
+    expect(trades).toHaveLength(1);
+    const t = trades[0];
+    expect(t.assetClass).toBe("futures");
+    expect(t.multiplier).toBe(2); // MNQ point value
+    expect(t.pointValue).toBe(2);
+    expect(t.tickSize).toBe(0.25);
+    expect(t.grossPnl).toBe(40); // (18010-18000)*2*2
+  });
+});
+
 describe("parseImport — error handling", () => {
   it("skips malformed rows with a reason and keeps the good ones", () => {
     const csv = [

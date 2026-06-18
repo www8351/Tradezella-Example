@@ -24,7 +24,15 @@ const MAX_BYTES = 8 * 1024 * 1024; // 8 MB
 
 const metaSchema = z.object({
   accountId: z.string().uuid("Select a valid account."),
-  platform: z.enum(["generic", "binance", "coinbase", "bybit", "mt4", "mt5"]),
+  platform: z.enum([
+    "generic",
+    "binance",
+    "coinbase",
+    "bybit",
+    "mt4",
+    "mt5",
+    "futures",
+  ]),
 });
 
 /**
@@ -161,6 +169,9 @@ export async function importExecutions(
     net_pnl: t.netPnl,
     initial_risk: t.initialRisk,
     r_multiple: t.rMultiple,
+    tick_size: t.tickSize ?? null,
+    point_value: t.pointValue ?? null,
+    contract_expiry: t.contractExpiry ?? null,
   }));
 
   let linkWarning: string | undefined;

@@ -27,7 +27,11 @@ const RISK = ["risk", "initialrisk", "stop", "stoploss", "sl"];
 
 export interface CompletedOpts {
   assetClass?: AssetClass;
-  multiplierFor?: (symbol: string) => number;
+  contractFor?: (symbol: string) => {
+    multiplier: number;
+    tickSize?: number | null;
+    pointValue?: number | null;
+  };
 }
 
 /** Parse a completed-trade CSV (one row = one closed trade). */
@@ -78,7 +82,10 @@ export function rowsToIngest(
 
     const sym = symbol as string;
     const direction = side === "buy" ? "long" : "short";
-    const multiplier = opts.multiplierFor ? opts.multiplierFor(sym) : 1;
+    const spec = opts.contractFor
+      ? opts.contractFor(sym)
+      : { multiplier: 1, tickSize: null, pointValue: null };
+    const multiplier = spec.multiplier;
     const assetClass: AssetClass = opts.assetClass ?? "cfd";
     const commission = Math.abs(parseNumber(pick(row, headers, COMMISSION)) ?? 0);
     const swap = Math.abs(parseNumber(pick(row, headers, SWAP)) ?? 0);
@@ -131,6 +138,9 @@ export function rowsToIngest(
       netPnl: net.toNumber(),
       initialRisk: risk ?? null,
       rMultiple,
+      tickSize: spec.tickSize ?? null,
+      pointValue: spec.pointValue ?? null,
+      contractExpiry: null,
       executionIndexes: [openIdx, closeIdx],
       executionRefs: [],
     });

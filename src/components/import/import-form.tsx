@@ -13,6 +13,7 @@ const PLATFORMS = [
   { value: "bybit", label: "Bybit (trade history CSV)" },
   { value: "mt4", label: "MetaTrader 4 (HTML statement or CSV)" },
   { value: "mt5", label: "MetaTrader 5 (HTML statement or CSV)" },
+  { value: "futures", label: "Futures (ES, NQ, CL, GC… fills or completed)" },
 ];
 
 export function ImportForm({ accountId }: { accountId: string }) {

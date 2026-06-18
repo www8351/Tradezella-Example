@@ -26,7 +26,11 @@ const FEES = ["fee", "fees", "commission", "execfee", "feeamount", "feepaid", "t
  */
 export function parseFills(
   text: string,
-  opts: { assetClass?: AssetClass; defaultMultiplier?: number } = {},
+  opts: {
+    assetClass?: AssetClass;
+    defaultMultiplier?: number;
+    contractFor?: (symbol: string) => { multiplier: number };
+  } = {},
 ): ParseResult {
   const { rows, headers } = parseCsv(text);
   const executions: ParsedExecution[] = [];
@@ -58,14 +62,18 @@ export function parseFills(
       return;
     }
 
+    const sym = symbol as string;
+    const multiplier = opts.contractFor
+      ? opts.contractFor(sym).multiplier
+      : (opts.defaultMultiplier ?? 1);
     executions.push({
-      symbol: symbol as string,
+      symbol: sym,
       side: side as "buy" | "sell",
       quantity: quantity as number,
       price: price as number,
       fees: Math.abs(fees),
       executedAt: executedAt as string,
-      multiplier: opts.defaultMultiplier ?? 1,
+      multiplier,
       assetClass: opts.assetClass ?? "crypto",
     });
   });
