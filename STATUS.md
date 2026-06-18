@@ -22,17 +22,21 @@ build` and `npm run lint` both pass clean.
 
 ## Open / To Do (current focus)
 - [x] Phase 1 committed + pushed to **https://github.com/www8351/acTrade** (PRIVATE, branch `main`).
-- [ ] **HALT POINT:** user connects the GitHub repo to Vercel and triggers the first deploy
-      manually. **Waiting for "Proceed".**
+- [x] Deployed to Vercel — **LIVE at https://ac-trade-rose.vercel.app** (HTTP 200, app renders).
+- [ ] **HALT POINT:** awaiting user's explicit **"Proceed"** to start Phase 2.
 
 ## Next Best Action
-Await the user's manual Vercel connection (import `www8351/acTrade`, build = Next.js, no env vars
-needed yet) and explicit **"Proceed"** before starting Phase 2 (Supabase project + schema + auth).
+On **"Proceed"**: Phase 2 — create Supabase project `actrade` (confirm cost first), apply the
+multi-asset schema + RLS, wire `@supabase/ssr` clients + Google OAuth, generate DB types.
 
 ## Blockers / Waiting On
-- User to (a) connect GitHub→Vercel + run the first deploy, then (b) say **"Proceed"**.
-- Note: repo flipped public→PRIVATE mid-step; GitHub briefly returned "repository is disabled"
-  during the visibility transition — transient, resolved on retry (repo confirmed `disabled:false`).
+- User to say **"Proceed"** for Phase 2.
+- **Phase 5 risk:** the Vercel project `ac-trade-rose` is NOT under team `refael8351` (the scope my
+  MCP token sees → `get_project` 404). Pushing prod env vars via MCP will need either team access or
+  manual entry. Revisit at Phase 5.
+- Resolved: initial deploy 404'd (Ready-but-404, personal-scope config). Re-imported → Vercel slug
+  `ac-trade-rose` → 200 OK. Also: repo public→PRIVATE flip briefly returned "repository is disabled"
+  (transient, resolved on retry).
 
 ## Needs Review
 - Landing page copy (placeholder marketing text) — refine in Phase 4.

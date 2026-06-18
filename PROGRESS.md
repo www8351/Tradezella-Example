@@ -30,7 +30,14 @@
   commit (preserved it) and fast-forward pushed — no force needed.
 - **PowerShell note:** `2>&1` on git makes `$?` false even on success (5.1 NativeCommandError);
   switched to `$LASTEXITCODE` for control flow.
-- **Open / HALT:** waiting for the user to connect GitHub→Vercel + first deploy, then "Proceed".
+- **Deploy:** user connected Vercel. First import (personal scope) returned **Ready-but-404** at the
+  root — a Vercel project-config issue, not the code (local `next build` serves `/`). Re-imported the
+  repo into a team scope; Vercel suffixed the slug to **`ac-trade-rose`**. Verified via WebFetch:
+  **https://ac-trade-rose.vercel.app → HTTP 200**, landing page renders (title, heading, nav, features).
+  404 resolved. **Phase 1 fully complete.**
+- **MCP caveat:** the deployed project isn't visible to the Vercel MCP token's team (`get_project`
+  404, `list_projects` empty) — it's in a scope the token can't reach. Flagged for Phase 5 env-var push.
+- **HALT:** awaiting explicit "Proceed" before Phase 2.
 - **Note for Phase 2:** Next 16 renames middleware concepts — `node_modules/next/dist/docs/` has
   `16-proxy.md`. Read `02-guides/authentication.md`, `16-proxy.md`, `15-route-handlers.md`,
   `18-upgrading.md` before writing Supabase SSR/session code.
