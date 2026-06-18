@@ -21,15 +21,18 @@ build` and `npm run lint` both pass clean.
   - **Verified:** `npm run build` ✓ (TS clean, `/` prerendered), `npm run lint` ✓ (no errors).
 
 ## Open / To Do (current focus)
-- [ ] **HALT POINT:** commit Phase 1, create GitHub remote, push. Then the user connects the
-      GitHub repo to Vercel and triggers the first deploy manually. **Waiting for "Proceed".**
+- [x] Phase 1 committed + pushed to **https://github.com/www8351/acTrade** (PRIVATE, branch `main`).
+- [ ] **HALT POINT:** user connects the GitHub repo to Vercel and triggers the first deploy
+      manually. **Waiting for "Proceed".**
 
 ## Next Best Action
-Commit + push Phase 1 to GitHub (repo name/visibility to confirm), then await user's manual
-Vercel connection and explicit "Proceed" before starting Phase 2.
+Await the user's manual Vercel connection (import `www8351/acTrade`, build = Next.js, no env vars
+needed yet) and explicit **"Proceed"** before starting Phase 2 (Supabase project + schema + auth).
 
 ## Blockers / Waiting On
-- User must (a) confirm GitHub repo name/visibility, (b) connect GitHub→Vercel + deploy, (c) say "Proceed".
+- User to (a) connect GitHub→Vercel + run the first deploy, then (b) say **"Proceed"**.
+- Note: repo flipped public→PRIVATE mid-step; GitHub briefly returned "repository is disabled"
+  during the visibility transition — transient, resolved on retry (repo confirmed `disabled:false`).
 
 ## Needs Review
 - Landing page copy (placeholder marketing text) — refine in Phase 4.
