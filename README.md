@@ -143,14 +143,14 @@ DB schema + RLS live in the Supabase project `actrade` (migrations `0001_init_sc
 <br/>
 
 - **Executions are the source of truth** (immutable fills). **Trades are derived** (average-cost),
-  with cached metric columns for fast dashboards. Re-imports dedup by content hash — never double-count.
+  with cached metric columns for fast dashboards. Re-imports dedup by content hash never double-count.
 - **Multi-asset from the schema up:** `asset_class` + per-instrument `multiplier`; futures carry
   `point_value` / `tick_size`.
 - **RLS** on every table (`auth.uid() = user_id`).
 
 </details>
 
-> ⚠️ This is **Next.js 16** — APIs differ from older versions (Middleware → Proxy, async `cookies()`).
+> ⚠️ This is **Next.js 16** APIs differ from older versions (Middleware → Proxy, async `cookies()`).
 > See `AGENTS.md` and `node_modules/next/dist/docs/` before writing framework code.
 
 ---
