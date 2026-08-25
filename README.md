@@ -150,6 +150,22 @@ DB schema + RLS live in the Supabase project `actrade` (migrations `0001_init_sc
 
 </details>
 
+## 📌 Status & known limitations
+
+v1 is build-complete: all five phases shipped, and `npm run build`, `npm run lint`, and the
+48-test Vitest suite are green. Tracked limitations, stated rather than hidden:
+
+- EU-locale numbers are not auto-detected (locale is per-import and explicit).
+- Cross-batch incremental closes are not re-reconstructed.
+- Futures `contract_expiry` is left null; `point_value` / `tick_size` are populated.
+- The trade log is single-page (no pagination yet).
+- The live deployment runs on `*.vercel.app`; no custom domain yet.
+
+Current state, decisions, and the dated history live in [`STATUS.md`](STATUS.md),
+[`DECISIONS.md`](DECISIONS.md), and [`PROGRESS.md`](PROGRESS.md).
+
+---
+
 > ⚠️ This is **Next.js 16** APIs differ from older versions (Middleware → Proxy, async `cookies()`).
 > See `AGENTS.md` and `node_modules/next/dist/docs/` before writing framework code.
 
@@ -157,7 +173,8 @@ DB schema + RLS live in the Supabase project `actrade` (migrations `0001_init_sc
 
 <div align="center">
 
-**Built by [@www8351](https://github.com/www8351)** · Source: `github.com/www8351/acTrade` (private)
+**Built by [@www8351](https://github.com/www8351)** · Public repo: `github.com/www8351/Tradezella-Example`
+(developed privately as `acTrade`)
 
 <sub>Executions are truth · trades are derived · exact decimal math.</sub>
 
